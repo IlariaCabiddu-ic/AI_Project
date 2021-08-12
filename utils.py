@@ -6,11 +6,11 @@ import itertools
 
 '''--------------------------------------------MINIMUM REMAINING VALUE!---------------------------------------'''
 
-def mrv(board, N, row, col):
+def mrv(upload_board):
 
     min_row_index = []
     v_nonzero = []
-    counter, index_free_cells, board = free_cells(board, row, col, N)  # numero di celle libere
+    counter, index_free_cells, board = free_cells(upload_board)  # numero di celle libere
                                                                        # con le loro posizioni e la board aggiornata
     for i in range(len(counter)): # scorro su tutto il vettore dei conteggi delle celle libere
         if counter[i] == 0:
@@ -28,7 +28,7 @@ def mrv(board, N, row, col):
     return min_row_index, index_free_cells, board  # restituisce le righe con il minor numero di celle disponibili
                                             # e le loro posizioni e la board aggiornata
 
-def mrv_constraints(board, row, col, N):  # da definire
+def constraints(board, row, col, N):  # da definire
     """cella libera :0
        cella occupata da una regina : 1
        cella bloccata da una regina : 2 """
@@ -56,10 +56,9 @@ def mrv_constraints(board, row, col, N):  # da definire
 
     return board  # restituisce la board aggiornata
 
-def free_cells( board, row, col, N):
+def free_cells(upload_board):
     counter = []
     index_free_cells = []
-    upload_board = mrv_constraints(board, row, col, N)
     for x in upload_board:
         L = x.count(0) # conteggio del numero di celle libere su ogni riga
         counter.append(L) # inserisci su un vettore tutti i conteggi
@@ -105,6 +104,7 @@ def nconflicts(board, min_row_index, index_free_cells, N):  # board, righe con m
     row_cells = list(item[0] for item in new_free_cells)  # slicing delle sole righe
     col_cells = list(item[1] for item in new_free_cells)  # slicing delle sole righe
     for g in range(len(row_cells)):  # faccio un unico for perchè n righe ed n colonne sono uguali
+        # print("row_cell_g" , row_cells)
         degree_constraints = blocked_cells(board, row_cells[g], col_cells[g], N)
         degree_vector_constraint.append(degree_constraints)  # listona con tutte le celle bloccate relativa ad ogni riga
 
