@@ -40,15 +40,19 @@ if __name__ == "__main__":
     list_index_free_cells = []
 
     """--------------------------------------------INIT_MAIN-------------------------------------------------"""
-
+    # for iter in range(1):
+    #     start=0
+    #     end=0
     start = time.time()  # start computing time
-    
+    #     print("iter",iter)
+    #     flag=0
+    #     board = [[0] * N for _ in range(N)]
     while not flag:
 
         row_index_old = row_index
 
-
-        row_index, index_free_cells, board = utils.mrv(board=board, row=row, col=col, N=N)  # restituisce le righe con
+        upload_board = utils.constraints(board=board,row=row, col=col, N=N)
+        row_index, index_free_cells, board = utils.mrv(upload_board=upload_board)  # restituisce le righe con
                                                                                      # il minor numero di celle
                                                                                      # disponibili e le loro
                                                                                     #posizioni e la board aggiornata
@@ -57,7 +61,7 @@ if __name__ == "__main__":
         list_index_free_cells.append(index_free_cells)
         if len(row_index) == 0:
             if np.count_nonzero(np.array(board) == 1) == N:  # abbiamo la soluzione
-                end = time.time()  # end computing time
+                end = time.time()
                 board = np.array(board)
                 board[board == 2]=0
                 print("abbiamo la soluzione GOOD!\n")  # finite le celle disponibili stampa la board
