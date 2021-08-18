@@ -10,84 +10,81 @@ def mrv(upload_board):
 
     min_row_index = []
     v_nonzero = []
-    counter, index_free_cells, board = free_cells(upload_board)  # numero di celle libere
-                                                                       # con le loro posizioni e la board aggiornata
-    for i in range(len(counter)): # scorro su tutto il vettore dei conteggi delle celle libere
+    counter, index_free_cells, board = free_cells(upload_board)  # number of available values
+                                                                 # available values and board
+    for i in range(len(counter)):
         if counter[i] == 0:
             continue
         else:
-            v_nonzero.append(counter[i]) # prendo i valori non nulli dal vettore counter perchè devo prendere il
-                                         # minimo ma non il nullo
+            v_nonzero.append(counter[i])  # counter without the zeros: rows with zero available values are not needed
+
 
     if len(v_nonzero) !=0:
-        Mini = np.min(v_nonzero)  # calcolo il minimo numero delle celle libere
+        Mini = np.min(v_nonzero)  # computing of the lower value of available cells
         for c in range(len(counter)):
-            if counter[c] == Mini:  # confronto il minimo con le altre righe
-                min_row_index.append(c)  # se ci sono più minimi uguali voglio tracciare entrambi
+            if counter[c] == Mini:  # check to see if there is a tie among different rows
+                min_row_index.append(c)
 
-    return min_row_index, index_free_cells, board  # restituisce le righe con il minor numero di celle disponibili
-                                            # e le loro posizioni e la board aggiornata
+    return min_row_index, index_free_cells, board  #  returns the rows with the lower number of values available
+                                                   # the position of the free cells and board
 
-def constraints(board, row, col, N):  # da definire
-    """cella libera :0
-       cella occupata da una regina : 1
-       cella bloccata da una regina : 2 """
+def constraints(board, row, col, N):
+
     board = np.array(board)
     lim_row = max((row - col, 0))
     lim_col = max((col - row, 0))
 
     for i in range(N):
-        board[row][i] = 2
-        board[i][col] = 2
+        board[row][i] = 2  # constraints imposed on the columns
+        board[i][col] = 2  # constraints imposed on the rows
 
-    for j in range(min((len(board), len(board[0]))) - max((lim_row, lim_col))): # blocco le diagonali
-        board[lim_row + j][lim_col + j] = 2
+    for j in range(min((len(board), len(board[0]))) - max((lim_row, lim_col))):  # constraints imposed on the diagonal
+        board[lim_row + j][lim_col + j] = 2                                      # from top left to bottom right
 
     board2 = np.fliplr(board)
     col1 = len(board2) - col - 1
-    lim_row = max((row - col1, 0))  # 2
-    lim_col = max((col1 - row, 0))  # 0
-    for k in range(min((len(board2), len(board2[0]))) - max((lim_row, lim_col))):
-        board2[lim_row + k][lim_col + k] = 2
+    lim_row = max((row - col1, 0))
+    lim_col = max((col1 - row, 0))
+    for k in range(min((len(board2), len(board2[0]))) - max((lim_row, lim_col))):  # constraints imposed on the diagonal
+        board2[lim_row + k][lim_col + k] = 2                                       # from top right to bottom left
 
     board = np.fliplr(board2)
     board[row][col] = 1
     board = np.array(board).tolist()
 
-    return board  # restituisce la board aggiornata
+    return board  # upload board for the constraints for a given placement of the queen
 
 def free_cells(upload_board):
     counter = []
     index_free_cells = []
     for x in upload_board:
-        L = x.count(0) # conteggio del numero di celle libere su ogni riga
-        counter.append(L) # inserisci su un vettore tutti i conteggi
+        L = x.count(0)  # counter of the number of available values for each row
+        counter.append(L)
     for r in range(len(upload_board)):
         for c in range(len(upload_board)):
             if upload_board[r][c] == 0:
-                index_free_cells.append([r, c])
+                index_free_cells.append([r, c])  # list with the position f the available cells
 
-    return counter,index_free_cells, upload_board # numero di celle libere su ogni riga e le loro posizioni e la board aggiornata
+    return counter,index_free_cells, upload_board  # returns the number of available cells per row, their position and
+                                                   # the board
 
 
 
 '''-------------------------------------------DEGREE HEURISTIC--------------------------------------------------'''
 
 
-def degree_heuristic(board, min_row_index, index_free_cells, N): # board, righe con minimo numero di celle libere,
-                                                                # posizione delle celle libere, dimensione board
+def degree_heuristic(board, min_row_index, index_free_cells, N):
 
-    rows_index = nconflicts(board,min_row_index, index_free_cells, N) # restituisce il numero di costraints che impone
-                                                                   # ogni riga scelta dalla mrv (min_index)
+    rows_index = nconflicts(board,min_row_index, index_free_cells, N)  # number of constraints imposed by each row given
+                                                                       # in output from the MRV
 
-    return rows_index  # restituisce il vettore di righe che impongono più costraint agli altri
+    return rows_index  # rows involved in the max number of constraints
 
 
-def nconflicts(board, min_row_index, index_free_cells, N):  # board, righe con minimo numero di celle libere,
-                                                          # posizione delle celle libere, dimensione board
-    # tengo solo gli indici delle celle delle righe che ci interessano (quelle con il minor numero di celle libere)
-    index_free_cells = np.array(index_free_cells) # converto in array per ottenere dalla prima colonna (dove viene
-                                                  # indicata la riga) solo le celle della riga scelta da min_row_index
+def nconflicts(board, min_row_index, index_free_cells, N):
+
+    # needed to keep only the position of the free cells of the rows obtained from the MRV
+    index_free_cells = np.array(index_free_cells)
     new_free_cells = []
     degree_vector_constraint = []
     loc = []
@@ -98,57 +95,58 @@ def nconflicts(board, min_row_index, index_free_cells, N):  # board, righe con m
     min_row_index = np.array(min_row_index)
     for f in min_row_index:
         a = index_free_cells[index_free_cells[:, 0] == f, :].tolist()
-        new_free_cells.append(a) # nuova lista delle celle libere con solo le righe di interesse (quello che ci dà mrv)
+        new_free_cells.append(a)  # free cells only of the selected rows (from MRV)
     new_free_cells = list(itertools.chain(*new_free_cells))
-    ''' modifica la board provando a posizionare una regina (concettualmente), devo contare le nuove celle che cambio'''
-    row_cells = list(item[0] for item in new_free_cells)  # slicing delle sole righe
-    col_cells = list(item[1] for item in new_free_cells)  # slicing delle sole righe
-    for g in range(len(row_cells)):  # faccio un unico for perchè n righe ed n colonne sono uguali
-        # print("row_cell_g" , row_cells)
+
+    row_cells = list(item[0] for item in new_free_cells)
+    col_cells = list(item[1] for item in new_free_cells)
+
+    for g in range(len(row_cells)):
         degree_constraints = blocked_cells(board, row_cells[g], col_cells[g], N)
-        degree_vector_constraint.append(degree_constraints)  # listona con tutte le celle bloccate relativa ad ogni riga
+        degree_vector_constraint.append(degree_constraints)  # list of all the constraint imposed
 
     n_row_vector = np.array(row_cells)
     n_row_vector_unique = np.unique(n_row_vector)
-    for i in n_row_vector_unique:  # cerco gli indici degli elementi duplicati in modo da poter togliere i doppioni
+    for i in n_row_vector_unique:
         locations = np.where(i == n_row_vector)[0]
         locations_list = locations.tolist()
-        loc.append(locations_list)  # indici delle celle delle stesse righe
+        loc.append(locations_list)
 
     for l in loc:
         for num in l:
             sublist_degree_constraint.append(degree_vector_constraint[num])
         unnested_list = list(chain(*sublist_degree_constraint))
         unnested_list.sort()
-        my_list = list(unnested_list for unnested_list, _ in itertools.groupby(unnested_list)) # listona di tutte le celle bloccate da ogni relativa togliendo i doppioni
+        my_list = list(unnested_list for unnested_list, _ in itertools.groupby(unnested_list)) # delete possible doubles
         sublist_degree_constraint = []
-        count_degree_vector.append([len(my_list)])  # calcolo del numero di celle bloccate da ogni riga
+        count_degree_vector.append([len(my_list)])  # list of all the constraint imposed by each row
 
-    max_count = max(count_degree_vector) # calcolo del massimo numero di celle bloccate
+    max_count = max(count_degree_vector)  # computing max values of imposed constraints
     for ind in range(len(count_degree_vector)):
         if count_degree_vector[ind] == max_count:
-            indexing.append(ind)  # in questo modo ho l'indice delle righe che blocca più celle
+            indexing.append(ind)  # index of the row which imposes more constraints
 
-    for r in indexing: # devo prenderli da row_vector_unique perchè così sono certa quali siano le righe
-        degree_row.append(n_row_vector_unique[r])  # restituisce le righe calcolate dal degree heuristic
+    for r in indexing:
+        degree_row.append(n_row_vector_unique[r])  # list of possible variables obtained applying DH
 
-    return degree_row # restituisce le righe che bloccano il numero più alto di celle
+    return degree_row
 
-def blocked_cells(board, row, col, N):
+def blocked_cells(board, row, col, N):  # function which counts the constraints imposed by the positioning of a queen
 
     list_index_cell_blocked = []
-    for j in range(N):  # controlla tutta la riga
-        if board[row][j] == 0 and j != col:  # cella libera, va in list_cell_blocked nel caso in cui posizionassi una regina in board[row][col]
+    for j in range(N):  # check the row
+        if board[row][j] == 0 and j != col:  # free cell, it would get blocked if we put a queen in board[row][col]
             list_index_cell_blocked.append([row, j])
-    for k in range(N):  # controllo tutta la colonna
-        if board[k][col] == 0 and k != row:  # cella libera, va in list_cell_blocked nel caso in cui posizionassi una regina in board[row][col]
+    for k in range(N):  # check the column
+        if board[k][col] == 0 and k != row:  # free cell, it would get blocked if we put a queen in board[row][col]
             list_index_cell_blocked.append([k, col])
 
     board = np.array(board)
     lim_row = max((row - col, 0))
     lim_col = max((col - row, 0))
+    # check diagonals
     for i in range(min((len(board), len(board[0]))) - max((lim_row, lim_col))):
-        if board[lim_row + i][lim_col + i] == 0 and lim_row +i != row and lim_col + i != col:
+        if board[lim_row + i][lim_col + i] == 0 and lim_row +i != row and lim_col + i != col: # free cell, it would get blocked if we put a queen in board[row][col]
             list_index_cell_blocked.append([lim_row + i,lim_col + i])
 
     board2 = np.fliplr(board)
@@ -156,22 +154,22 @@ def blocked_cells(board, row, col, N):
     lim_row = max((row - col1, 0))
     lim_col = max((col1 - row, 0))
     for i in range(min((len(board2), len(board2[0]))) - max((lim_row, lim_col))):
-        if board2[lim_row + i][lim_col + i] == 0 and lim_row + i != row and lim_col + i != col1:
+        if board2[lim_row + i][lim_col + i] == 0 and lim_row + i != row and lim_col + i != col1: # free cell, it would get blocked if we put a queen in board[row][col]
             list_index_cell_blocked.append([lim_row + i, len(board2) - (lim_col + i) - 1])
 
     board = np.fliplr(board2)
-    board[row][col] = 0  # ripristino il valore a quello di prima
+    board[row][col] = 0
     board = np.array(board).tolist()
 
-    return list_index_cell_blocked  # restituisce la lista di tutte le celle bloccate
+    return list_index_cell_blocked  # list of blocked cells
 
 
 '''------------------------------------------LEAST COSTRAINING VALUE---------------------------------------------'''
 
-def lcv(board,row_chosen, index_free_cells,N): # row_choised: riga che sarà scelta o dal mrv o da degree
+def lcv(board,row_chosen, index_free_cells,N):  # row chosen from MRV or DH
 
     index_free_cells = np.array(index_free_cells)
-    lcv_free_cells = index_free_cells[index_free_cells[:, 0] == row_chosen, :].tolist() # prendo tutte le celle con la riga selezionata dal degree heuritic
+    lcv_free_cells = index_free_cells[index_free_cells[:, 0] == row_chosen, :].tolist()  # only cells from selected row
     pos_queen = n_conflict_lcv(board,lcv_free_cells,row_chosen,N)
 
     return pos_queen
@@ -183,26 +181,26 @@ def n_conflict_lcv(board,lcv_free_cells, row_chosen,N):
     count_lcv_vector = []
     indexing = []
     lcv_col = []
-    ''' modifica la board provando a posizionare una regina (concettualmente), devo contare le nuove celle che cambio'''
-    col_cells = list(item[1] for item in lcv_free_cells)  # slicing delle colonne celle libere
+
+    col_cells = list(item[1] for item in lcv_free_cells)
     if type(row_chosen) == list:
         row_chosen=row_chosen[0]
     for g in range(len(col_cells)):
-        lcv_constraints = blocked_cells(board, row_chosen, col_cells[g], N)  #richiamo blocked cells per vedere quante celle blocca
-        lcv_vector_constraint.append(lcv_constraints)  # listona con tutte le celle bloccate relativa ad ogni colonna
+        lcv_constraints = blocked_cells(board, row_chosen, col_cells[g], N)  # check the number of constraints imposed by that cell
+        lcv_vector_constraint.append(lcv_constraints)  # list with cells blocked by each column
 
     for l in lcv_vector_constraint:
-        count_lcv_vector.append(len(l)) # conteggio delle celle bloccate relativa ad ogni colonna della riga selezionata
+        count_lcv_vector.append(len(l))  # number of constraints imposed by each column
 
-    min_count = min(count_lcv_vector) # calcolo il minimo numero di celle bloccate
+    min_count = min(count_lcv_vector)  # computing of the min value of imposed constraints
     for ind in range(len(count_lcv_vector)):
         if count_lcv_vector[ind] == min_count:
-            indexing.append(ind)  # in questo modo ho l'indice delle righe che blocca più celle
+            indexing.append(ind)  # check if there's a tie between columns
 
-    for r in indexing:  # devo prenderli da row_vector_unique perchè così sono certa quali siano le righe
-        lcv_col.append(col_cells[r])  # restituisce le colonne calcolate dal lcv
+    for r in indexing:
+        lcv_col.append(col_cells[r])  # selected value
 
-    return lcv_col  #  possibile colonna da selezionare perchè la riga è già stata scelta
+    return lcv_col
 
 """-----------------------PLOTTING RESULTS--------------------------------------------------------------"""
 
